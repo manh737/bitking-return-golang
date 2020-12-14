@@ -4,9 +4,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/manh737/bitking-return-golang/db"
+	"github.com/manh737/bitking-return-golang/handler"
+	"github.com/manh737/bitking-return-golang/store"
 )
 
-func New() *echo.Echo {
+// Create creates the gin engine with all routes.
+func Create(db *db.DB) *echo.Echo {
+
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 	e.Pre(middleware.RemoveTrailingSlash())
@@ -16,6 +21,13 @@ func New() *echo.Echo {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
 	}))
-	e.Validator = NewValidator()
+
+	ticketStore := store.NewTicketStore(db)
+	ticketHandler := handler.NewTicketHandler(ticketStore)
+
+	postT := e.Group("/ticket")
+	{
+		postT.POST("/buy", ticketHandler.BuyTicket)
+	}
 	return e
 }
